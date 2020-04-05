@@ -1,4 +1,4 @@
-## What is?
+## What is? | [Download](https://github.com/sudo-give-me-coffee/strace-file/releases/download/continuous/strace-file)
 **strace-file** is a wrapper for **strace** that list all files accessed by application with a friendly output
 
 ## Usage
