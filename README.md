@@ -6,10 +6,16 @@
 usage: strace-file [option] PROG [ARGS]
 
 Options:
-  -n    Prints only non existing files
-  -a    Prints both nonexistent and existing files
-  -e    Prints only existing files (default behaviour)
-  -v    Prints version of strace-file
+  -n  Only non existing
+  -e  Only existing files (default behaviour)
+  -a  Both nonexistent and existing files
+  -s  Only files in /usr, /lib, /lib64, /var, /bin and /sbin
+  -b  Exclude /usr/share, /usr/local/share and /var
+  -v  Prints version of strace-file
+
+Notes for in Flatpak usage, is needed to pass as first parameter:
+  ¹ --allow=devel to flatpak will add SYS_PTRACE capability
+  ² --appimage-extract-and-run to strace-file
 ```
 
 ## Sample output:

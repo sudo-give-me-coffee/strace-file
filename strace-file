@@ -4,56 +4,95 @@ HERE="$(dirname "$(readlink -f "${0}")")"
 export LIBRARY_PATH="$HERE/usr/lib/x86_64-linux-gnu"
 export LIBRARY_PATH="$HERE/lib/x86_64-linux-gnu":$LIBRARY_PATH
 
+NOENT="NOENT"
+FlAG="-v"
+
 function strace_tool(){
   [ -f "${HERE}/lib64/ld-linux-x86-64.so.2" ] && {
-    exec "${HERE}/lib64/ld-linux-x86-64.so.2" --inhibit-cache --library-path "${LIBRARY_PATH}" "${HERE}/usr/bin/strace" -efile ${@}
+    exec "${HERE}/lib64/ld-linux-x86-64.so.2" --inhibit-cache                      \
+                                              --library-path "${LIBRARY_PATH}"     \
+                                              "${HERE}/usr/bin/strace" -efile ${@} 2>&1
     return ${?}
   }
-  strace -efile ${@}
+  strace -efile ${@} 2>&1
   return ${?}
 }
 
-[ "${1}" = "-n" ] && {
-  shift
-  strace_tool ${@} 2>&1 | grep -E "NOENT" | cut -d\" -f2 | grep ^"/"
-  exit ${?}
-}
-
-[ "${1}" = "-a" ] && {
-  shift
-  strace_tool ${@} 2>&1 | cut -d\" -f2 | grep ^"/"
-  exit ${?}
-}
-
-[ "${1}" = "-e" ] && {
-  shift
-  strace_tool ${@} 2>&1 | grep -Ev "NOENT" | cut -d\" -f2 | grep ^"/"
-  exit ${?}
-}
-
-[ "${1}" = "-h" ] && {
-  echo -e "usage: strace-file [option] PROG [ARGS]\n"
-  echo "Options:"
-  echo "  -n    Prints only non existing files"
-  echo "  -a    Prints both nonexistent and existing files"
-  echo "  -e    Prints only existing files (default behaviour)"
-  echo "  -v    Prints version of strace-file"
-  exit 0
-}
-
-[ "${1}" = "-v" ] && {
-  echo -e "strace-file: Copyright (c) 2020 Natanael Barbosa Santos"
-  echo -e "Version: 1.0"
-  exit 0
-}
-
-[ "${1}" = "" ] && {
+[ -z "${1}" ] && {
   echo "strace-file: must have at least PROG [ARGS]" 1>&2
   echo "Try 'strace -h' for more information." 1>&2
   exit 1
 }
 
-  strace_tool ${@} 2>&1 | grep -Ev "NOENT" | cut -d\" -f2 | grep ^"/"
-  exit ${?}
+[ "${1}" = "-h" ] && {
+  echo "usage: strace-file [option] PROG [ARGS]"
+  echo
+  echo "Description:"
+  echo "  List all files accessed by application"
+  echo
+  echo "Options:"
+  echo "  -n  Only non existing"
+  echo "  -e  Only existing files (default behaviour)"
+  echo "  -a  Both nonexistent and existing files"
+  echo "  -s  Only files in /usr, /lib, /lib64, /var, /bin and /sbin"
+  echo "  -b  Exclude /usr/share, /usr/local/share and /var"
+  echo "  -v  Prints version of strace-file"
+  echo
+  echo "Notes for in Flatpak usage, is needed to pass as first parameter:"
+  echo "  ¹ --allow=devel to flatpak will add SYS_PTRACE capability"
+  echo "  ² --appimage-extract-and-run to strace-file"
+  echo
+  exit 0
+}
 
+[ "${1}" = "-v" ] && {
+  echo -e "strace-file: Copyright (c) 2020 Natanael Barbosa Santos"
+  echo -e "Version: 1.1"
+  exit 0
+}
 
+for arg in ${@}; do
+  [ "${arg}" = "-n" ] && {
+    shift
+    unset FlAG
+    NOENT="NOENT"
+  }
+  [ "${arg}" = "-e" ] && {
+    shift
+    NOENT="NOENT"
+    FlAG="-v"
+  }
+  [ "${arg}" = "-a" ] && {
+    shift
+    unset exclude
+    unset only
+    unset NOENT
+    unset FlAG
+  }
+  [ "${arg}" = "-s" ] && {
+    shift
+    only+=("^/usr" "^/lib" "^/lib64" "^/var" "^/bin" "^/sbin")
+  }
+  [ "${arg}" = "-b" ] && {
+    shift
+    exclude+=("^/usr/share" "^/usr/local/share" "^/var")
+  }
+done
+
+only=$(echo "${only[@]}" | tr ' ' '|')
+exclude+=("/proc" "/sys" "/dev" "/run" )
+exclude=$(echo "${exclude[@]}" | tr ' ' '|')
+
+[ -z "${1}" ] && {
+  echo "strace-file: must have at least PROG [ARGS]" 1>&2
+  echo "Try 'strace -h' for more information." 1>&2
+  exit 1
+}
+
+echo "/lib64/ld-linux-x86-64.so.2"
+strace_tool ${*} | grep ${FlAG} "${NOENT}" \
+                 | cut -d\" -f2            \
+                 | grep -E "${only}"       \
+                 | grep -vE "${exclude}"
+
+exit ${?}
