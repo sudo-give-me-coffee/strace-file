@@ -9,7 +9,7 @@ Options:
   -n  Only non existing
   -e  Only existing files (default behaviour)
   -a  Both nonexistent and existing files
-  -s  Only files in /usr, /lib, /lib64, /var, /bin and /sbin
+  -s  Only files in /app, /usr, /lib, /lib64, /var, /bin and /sbin
   -b  Exclude /usr/share, /usr/local/share and /var
   -v  Prints version of strace-file
 

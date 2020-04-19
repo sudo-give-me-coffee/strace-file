@@ -34,7 +34,7 @@ function strace_tool(){
   echo "  -n  Only non existing"
   echo "  -e  Only existing files (default behaviour)"
   echo "  -a  Both nonexistent and existing files"
-  echo "  -s  Only files in /usr, /lib, /lib64, /var, /bin and /sbin"
+  echo "  -s  Only files in /app, /usr, /lib, /lib64, /var, /bin and /sbin"
   echo "  -b  Exclude /usr/share, /usr/local/share and /var"
   echo "  -v  Prints version of strace-file"
   echo
@@ -71,7 +71,7 @@ for arg in ${@}; do
   }
   [ "${arg}" = "-s" ] && {
     shift
-    only+=("^/usr" "^/lib" "^/lib64" "^/var" "^/bin" "^/sbin")
+    only+=("^/app" "^/usr" "^/lib" "^/lib64" "^/var" "^/bin" "^/sbin")
   }
   [ "${arg}" = "-b" ] && {
     shift
